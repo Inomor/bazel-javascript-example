@@ -1,0 +1,6 @@
+# Typescript tools need a top level target
+
+exports_files(
+    ["tsconfig.json"],
+    visibility = ["//visibility:public"],
+)

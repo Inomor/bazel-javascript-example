@@ -1,0 +1,37 @@
+load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
+load("@npm//@bazel/typescript:index.bzl", "ts_project")
+
+package(default_visibility = ["//visibility:private"])
+
+exports_files(
+    ["tsconfig.json"],
+    visibility = ["//visibility:public"],
+)
+
+ts_project(
+    name = "app",
+    srcs = glob(["src/**/*.ts"]),
+    # tsconfig = "//:tsconfig.json",
+    deps = [
+        "@npm//@types/node",
+        "@npm//express",
+        "@npm//sse-channel",
+        "@npm//tslib",
+    ],
+)
+
+filegroup(
+    name = "assets",
+    srcs = glob(["www/**/*"]),
+)
+
+# bazel run //fx-server
+nodejs_binary(
+    name = "fx-server",
+    data = [
+        ":app",
+        ":assets",
+    ],
+    entry_point = ":src/main.ts",
+    visibility = ["//visibility:public"],
+)

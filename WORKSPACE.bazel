@@ -1,0 +1,67 @@
+workspace(
+    name = "full_stack_suite",
+)
+
+# Docs:
+# "As of rules_nodejs 5.0, symlink_node_modules defaults to False and
+# using managed_directories is not recommended"
+
+# Issue:
+# https://github.com/bazelbuild/rules_nodejs/issues/2708
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Javascript / Typescript tooling
+
+http_archive(
+    name = "build_bazel_rules_nodejs",
+    sha256 = "a09edc4ba3931a856a5ac6836f248c302d55055d35d36e390a0549799c33145b",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.0.2/rules_nodejs-5.0.2.tar.gz"],
+)
+
+load("@build_bazel_rules_nodejs//:repositories.bzl", "build_bazel_rules_nodejs_dependencies")
+
+build_bazel_rules_nodejs_dependencies()
+
+load("@rules_nodejs//nodejs:repositories.bzl", "nodejs_register_toolchains")
+
+nodejs_register_toolchains(
+    name = "nodejs",  # You can load another version under another name
+    node_version = "16.13.2",
+)
+
+# It is also possible to set up the various things
+# nodejs_register_toolchains separately, which lets you do things like
+# set a Yarn version.
+
+# build_bazel_rules_nodejs comes with bazel_skylib
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
+
+load("@build_bazel_rules_nodejs//:index.bzl", "yarn_install")
+
+yarn_install(
+    name = "npm",
+    # This is required to allow rules to reach inside packages and
+    # depend on arbitrary files. It is needed for ts_library,
+    # ng_module, and many other cases.
+    exports_directories_only = False,
+    package_json = "//:package.json",
+    yarn_lock = "//:yarn.lock",
+)
+
+# Setup esbuild repositories
+
+load("@build_bazel_rules_nodejs//toolchains/esbuild:esbuild_repositories.bzl", "esbuild_repositories")
+
+esbuild_repositories(npm_repository = "npm")
+
+# Needed the POM file generator:
+
+http_archive(
+    name = "bazel_common",
+    strip_prefix = "bazel-common-bf8e5ef95b118d1716b0cb4982cf15b6ed1c896f",
+    url = "https://github.com/google/bazel-common/archive/bf8e5ef95b118d1716b0cb4982cf15b6ed1c896f.zip",
+)
